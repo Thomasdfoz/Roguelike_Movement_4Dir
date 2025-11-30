@@ -9,18 +9,18 @@ namespace EGS.RoguelikeMovement4Dir
     public class PlayerMovement : MonoBehaviour
     {
         [Header("Movement Settings")]
-        public float moveSpeed = 5f;
-        public float rotationSpeed = 15f;
-        public float jumpHeight = 1.5f;
-        public float gravity = -20f;
+        [SerializeField] private float moveSpeed = 5f;
+        [SerializeField] private float rotationSpeed = 15f;
+        [SerializeField] private float jumpHeight = 1.5f;
+        [SerializeField] private float gravity = -20f;
 
         [Header("References")]
-        public Camera mainCamera;                 // assign MainCamera in inspector
-        public LayerMask groundMask = ~0;         // set to "Ground" layer in inspector
-        public PlayerAnimationController animController; // decoupled animation controller
+        [SerializeField] private Camera mainCamera;                 // assign MainCamera in inspector
+        [SerializeField] private LayerMask groundMask = ~0;         // set to "Ground" layer in inspector
+        [SerializeField] private PlayerAnimationController animController; // decoupled animation controller
 
         [Header("Input")]
-        public PlayerInput playerInput; // optional: drag PlayerInput or let Awake find it
+        [SerializeField] private PlayerInput playerInput; // optional: drag PlayerInput or let Awake find it
         private InputAction moveAction;
         private InputAction lookAction;
         private InputAction jumpAction;

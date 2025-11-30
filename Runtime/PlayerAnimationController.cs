@@ -9,26 +9,26 @@ namespace EGS.RoguelikeMovement4Dir
     [RequireComponent(typeof(Animator))]
     public class PlayerAnimationController : MonoBehaviour
     {
+        [SerializeField] private Animator animator;
+
         [Header("Animator Parameters")]
-        public string paramMoveX = "MoveX";
-        public string paramMoveY = "MoveY";
-        public string paramSpeed = "Speed";
-        public string paramIsGrounded = "IsGrounded";
-        public string paramJump = "Jump";
-        public string paramAttack = "Attack";
+        [SerializeField] private string paramMoveX = "MoveX";
+        [SerializeField] private string paramMoveY = "MoveY";
+        [SerializeField] private string paramSpeed = "Speed";
+        [SerializeField] private string paramIsGrounded = "IsGrounded";
+        [SerializeField] private string paramJump = "Jump";
+        [SerializeField] private string paramAttack = "Attack";
 
         [Header("Layer Settings")]
         [Tooltip("Index of the layer used for upper-body (attacks/aim).")]
-        public int upperBodyLayerIndex = 1;
+        [SerializeField] private int upperBodyLayerIndex = 1;
         [Range(0f, 1f)] public float upperBodyDefaultWeight = 1f;
-        public float upperBodyBlendSpeed = 10f; // smoothing when enabling/disabling upper body overrides
+        [SerializeField] private float upperBodyBlendSpeed = 10f; // smoothing when enabling/disabling upper body overrides
 
-        private Animator animator;
         private float targetUpperWeight = 0f;
 
         void Awake()
         {
-            animator = GetComponent<Animator>();
             // Ensure initial weight
             if (animator.layerCount > upperBodyLayerIndex)
                 animator.SetLayerWeight(upperBodyLayerIndex, upperBodyDefaultWeight);
