@@ -6,7 +6,6 @@ namespace EGS.RoguelikeMovement4Dir
     /// Single-purpose animation controller: receives high-level calls from gameplay systems
     /// and updates Animator parameters / layers. Does NOT read input or move the character.
     /// </summary>
-    [RequireComponent(typeof(Animator))]
     public class PlayerAnimationController : MonoBehaviour
     {
         [SerializeField] private Animator animator;
