@@ -8,7 +8,7 @@ namespace EGS.RoguelikeMovement4Dir
     /// </summary>
     public class PlayerAnimationController : MonoBehaviour
     {
-        [SerializeField] private Animator animator;
+        [SerializeField] private Animator _animator;
 
         [Header("Animator Parameters")]
         [SerializeField] private string paramMoveX = "MoveX";
@@ -24,23 +24,28 @@ namespace EGS.RoguelikeMovement4Dir
         [Range(0f, 1f)] public float upperBodyDefaultWeight = 1f;
         [SerializeField] private float upperBodyBlendSpeed = 10f; // smoothing when enabling/disabling upper body overrides
 
+        private const string PLACEHOLDER_CLIP_NAME = "BowShot";
+
+        private AnimatorOverrideController _overrideController;
+        private AnimationClip _defaultClip;
         private float targetUpperWeight = 0f;
 
-        void Awake()
+        private void Awake()
         {
-            // Ensure initial weight
-            if (animator.layerCount > upperBodyLayerIndex)
-                animator.SetLayerWeight(upperBodyLayerIndex, upperBodyDefaultWeight);
+            // Cria uma cópia em runtime do controller original para não alterar os assets do projeto
+            _overrideController = new AnimatorOverrideController(_animator.runtimeAnimatorController);
+            _animator.runtimeAnimatorController = _overrideController;
+            _defaultClip = _overrideController[PLACEHOLDER_CLIP_NAME];
         }
 
         void Update()
         {
             // Smoothly apply target weight to avoid pops when enabling attack layer
-            if (animator.layerCount > upperBodyLayerIndex)
+            if (_animator.layerCount > upperBodyLayerIndex)
             {
-                float current = animator.GetLayerWeight(upperBodyLayerIndex);
+                float current = _animator.GetLayerWeight(upperBodyLayerIndex);
                 float next = Mathf.Lerp(current, targetUpperWeight, Time.deltaTime * upperBodyBlendSpeed);
-                animator.SetLayerWeight(upperBodyLayerIndex, next);
+                _animator.SetLayerWeight(upperBodyLayerIndex, next);
             }
         }
 
@@ -54,7 +59,7 @@ namespace EGS.RoguelikeMovement4Dir
         /// </summary>
         public void UpdateMovement(Vector3 worldMove, Transform characterTransform, float dampTime = 0.08f)
         {
-            if (animator == null || characterTransform == null) return;
+            if (_animator == null || characterTransform == null) return;
 
             // Convert world movement into local space relative to player's facing direction
             Vector3 local = characterTransform.InverseTransformDirection(worldMove);
@@ -62,38 +67,50 @@ namespace EGS.RoguelikeMovement4Dir
             float moveY = Mathf.Clamp(local.z, -1f, 1f);
             float speed = Mathf.Clamp01(worldMove.magnitude);
 
-            animator.SetFloat(paramMoveX, moveX, dampTime, Time.deltaTime);
-            animator.SetFloat(paramMoveY, moveY, dampTime, Time.deltaTime);
-            animator.SetFloat(paramSpeed, speed, dampTime, Time.deltaTime);
+            _animator.SetFloat(paramMoveX, moveX, dampTime, Time.deltaTime);
+            _animator.SetFloat(paramMoveY, moveY, dampTime, Time.deltaTime);
+            _animator.SetFloat(paramSpeed, speed, dampTime, Time.deltaTime);
         }
 
         public void SetGrounded(bool grounded)
         {
-            if (animator == null) return;
-            animator.SetBool(paramIsGrounded, grounded);
+            if (_animator == null) return;
+            _animator.SetBool(paramIsGrounded, grounded);
         }
 
         public void TriggerJump()
         {
-            if (animator == null) return;
-            animator.SetTrigger(paramJump);
+            if (_animator == null) return;
+            _animator.SetTrigger(paramJump);
         }
 
         /// <summary>
-        /// Trigger a regular upper-body attack animation.  
-        /// It will raise the upper body layer weight during attack and return to default after.
+        /// Toca o ataque. Se lOverrideClip for nulo, usa a animação padrão (BowShot).
         /// </summary>
-        public void TriggerAttack()
+        public void TriggerAttack(AnimationClip lOverrideClip = null)
         {
-            if (animator == null) return;
+            // 1. Determina qual clipe usar: O novo (se existir) OU o Padrão (cacheado no Awake)
+            AnimationClip lClipToPlay = (lOverrideClip != null) ? lOverrideClip : _defaultClip;
 
-            // raise upper-body layer weight immediately (target) so the upper-body animation overrides lower body
+            // 2. Aplica a troca
+            // Se for o custom, ele troca. Se for o default, ele restaura o BowShot.
+            _overrideController[PLACEHOLDER_CLIP_NAME] = lClipToPlay;
+
+            // 3. Lógica do Layer Weight
             targetUpperWeight = 1f;
-            animator.SetTrigger(paramAttack);
-            // keep weight staying while the attack plays; you can also animate weight via animation events
-            // here we schedule fallback to default weight after a small delay (safety)
+
+            // Garante que o peso suba instantaneamente para o ataque não começar "fraco"
+            // (Opcional: remova se quiser que o Update faça o blend suave de entrada)
+            _animator.SetLayerWeight(upperBodyLayerIndex, 1f);
+
+            // 4. Dispara o Trigger
+            _animator.SetTrigger(paramAttack);
+
+            // 5. Agenda o reset baseado na duração do clipe QUE VAI TOCAR
+            float lDuration = lClipToPlay != null ? lClipToPlay.length : 0.6f;
+
             CancelInvoke(nameof(ResetUpperBodyToDefault));
-            Invoke(nameof(ResetUpperBodyToDefault), 0.6f); // tweak duration to match attack anim length
+            Invoke(nameof(ResetUpperBodyToDefault), lDuration);
         }
 
         public void EnableUpperBodyOverride(bool enable)
