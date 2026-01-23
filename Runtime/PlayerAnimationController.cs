@@ -22,7 +22,7 @@ namespace EGS.RoguelikeMovement4Dir
         [Tooltip("Index of the layer used for upper-body (attacks/aim).")]
         [SerializeField] private int upperBodyLayerIndex = 1;
         [Range(0f, 1f)] public float upperBodyDefaultWeight = 1f;
-        [SerializeField] private float upperBodyBlendSpeed = 10f; // smoothing when enabling/disabling upper body overrides
+        [SerializeField] private float upperBodyBlendSpeed = 10f; 
 
         private const string PLACEHOLDER_CLIP_NAME = "BowShot";
 
@@ -32,11 +32,20 @@ namespace EGS.RoguelikeMovement4Dir
 
         private void Awake()
         {
-            // Cria uma cópia em runtime do controller original para não alterar os assets do projeto
-            _overrideController = new AnimatorOverrideController(_animator.runtimeAnimatorController);
-            _animator.runtimeAnimatorController = _overrideController;
+            if (_animator.runtimeAnimatorController is AnimatorOverrideController existingOverride)
+            {
+                _overrideController = existingOverride;
+            }
+            else
+            {
+                _overrideController = new AnimatorOverrideController(_animator.runtimeAnimatorController);
+                _animator.runtimeAnimatorController = _overrideController;
+            }
+
             _defaultClip = _overrideController[PLACEHOLDER_CLIP_NAME];
         }
+
+
 
         void Update()
         {
