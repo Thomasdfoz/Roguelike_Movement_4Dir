@@ -32,7 +32,11 @@ namespace EGS.RoguelikeMovement4Dir
 
         private void Awake()
         {
-            _animator = GetComponentInChildren<Animator>();
+            if (_animator == null)
+            _animator = GetComponent<Animator>();
+
+            if (_animator == null)
+                _animator = GetComponentInChildren<Animator>();
 
 
             if (_animator.runtimeAnimatorController is AnimatorOverrideController existingOverride)
